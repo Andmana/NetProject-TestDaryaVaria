@@ -1,0 +1,95 @@
+﻿@using NetProject.ViewModels
+@{
+    int index = 1;
+    Func<string, string> statusClass = (detail) =>
+    {
+        if (detail == "SAFE")
+            return "success";
+        else if (detail == "EXPIRED")
+            return "danger";
+        else
+            return "primary"; // Provide a fallback return if no conditions are met
+    };
+
+    int UserId = Context.Session.GetInt32("UserId") ?? 0;
+    int RoleId = Context.Session.GetInt32("RoleId") ?? 0;
+}
+
+<div class="card">
+    <div class="card-header">
+        <div class="d-flex align-items-center">
+            <h4 class="card-title">Medicine</h4>
+            <button id="btn_add" class="btn btn-primary btn-round ms-auto">
+                <i class="fa fa-plus"></i>
+                Tambah Data
+            </button>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-striped table-responsive">
+            <thead>
+                <tr>
+                    <th>No</th>
+                    <th>Medicine Name</th>
+                    <th>Price</th>
+                    <th>Stock</th>
+                    <th>Expired Date</th>
+                    <th>Status</th>
+                @if(UserId != 0 && RoleId == 1 )
+                {
+                    <th>Actions</th>
+                        
+                }
+                </tr>
+            </thead>
+            <tbody class="table-border-bottom-0">
+            @foreach(ViewMedicine item in Model)
+            {
+                <tr>
+                    <th scope="row">@index</th>
+                    <td>
+                        <i class="fab fa-angular fa-lg text-danger me-3"></i> 
+                        <strong>@item.Name</strong></td>
+                    <td>@item.Price</td>
+                    <td>@item.Stock</td>
+                        <td>@string.Format("{0:dd MMMM yyyy}", item.ExpiredDate)</td>
+                    <td><span class="badge bg-label-@(statusClass(item.ExpiredDetail)) me-1">@item.ExpiredDetail</span></td>
+                @if (UserId != 0 && RoleId == 1)
+                {
+                    <td>
+                        @if (item.ExpiredDetail != "EXPIRED")
+                        {
+                            <button class="btn btn-light btn_request" dataId="@item.Id">
+                                Request
+                            </button>
+                        }
+                    </td>
+                }
+                  
+                    </tr>
+                    index++;
+                }
+            </tbody>
+        </table>
+    </div>
+    <script>
+        $("#btn_add").click(function () {
+            $("#modal_body").empty()
+            $("#modal_body").load("/Medicine/Add")
+            $("#my_modal").modal("show")
+        })
+
+        $(".btn_request").click(function () {
+            var id = $(this).attr("dataid")
+
+            $("#modal_body").empty()
+            $("#modal_body").load("/Medicine/Request/" + id)
+            $("#my_modal").modal("show")
+        })
+        
+                  $('#Medicine').addClass('active');
+
+
+    </script>
+</div>
+

@@ -1,0 +1,189 @@
+﻿@using NetProject.ViewModels
+@model EntityPagination<ViewRequestMed>
+@{
+    int index = 1;
+    Func<string, string> statusClass = (detail) =>
+    {
+        if (detail == "REQUEST")
+            return "info";
+        else if (detail == "APPROVED")
+            return "success";
+        else
+            return "primary"; // Provide a fallback return if no conditions are met
+    };
+
+    int UserId = Context.Session.GetInt32("UserId") ?? 0;
+    int RoleId = Context.Session.GetInt32("RoleId") ?? 0;
+}
+}
+<div class="card">
+    <div class="card-header">
+        <div class="d-flex align-items-center">
+            <h4 class="card-title">Request Med</h4>
+            
+        </div>
+    </div>
+        <div class="card-body">
+            <form asp-action="Index" method="get" id="form_search">
+                <div class="row">
+                <div class="col-sm-12 col-md-6">
+                    <div class="dataTables_length d-flex justify-content-start align-items-center gap-2" id="add-row_length">
+                        <span> show </span>
+                        <label>
+                            <select id="select_show" name="showData" aria-controls="add-row" class="form-control form-control-sm">
+                                <option value="5">5</option>
+                                <option value="10">10</option>
+                                <option value="25">25</option>
+                            </select>
+                        </label>
+                        <span> entries </span>
+                    </div>
+                </div>
+                <div class="col-sm-12 col-md-6">
+                    <div id="add-row_filter" class="dataTables_filter d-flex justify-content-end align-items-center gap-3 ">
+                        <div class="row ">
+                            <label for="searchTerm" class="col-md-4 col-form-label text-end">Search :</label>
+                            <div class="col-md-8 d-flex align-items-center">
+                                <input class="form-control-sm" type="search" id="searchTerm" name="searchTerm" value="@ViewBag.currentSearchTerm">
+                            </div>
+                        </div>
+                        <div class="btn btn-icon btn-round btn-primary" style="cursor:pointer" id="btn_search">
+                            <i class="bi bi-search"></i>
+                        </div>
+                        <div id="btn_reset" class="btn btn-icon btn-secondary btn-round btn-black">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            </form>
+
+            <div class="row">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Requested by</th>
+                                <th>Medicine Name</th>
+                                <th>Quantity</th>
+                                <th>Request Date</th>
+                                <th>Approve Date</th>
+                                <th>Approved by</th>
+                                <th>Status</th> @if (UserId != 0 && RoleId > 1)
+                                {
+                                    <th>Actions</th>
+                                }
+                            </tr>
+                        </thead>
+                        <tbody class="table-border-bottom-0">
+                            @if (Model.TotalData == 0)
+                            {
+                                <tr>
+                                    <td colspan="4" class="text-center">
+                                        <string>Data Not Found</string>
+                                    </td>
+                                </tr>
+                            } @foreach (ViewRequestMed item in Model.Items)
+                            {
+                                <tr>
+                                    <th >@index</th>
+                                    <td>
+                                        <i class="fab fa-angular fa-lg text-danger me-3"></i>
+                                        <strong>@item.RequesterName</strong>
+                                    </td>
+                                    <td>@item.MedicineName</td>
+                                    <td>@item.Quantity</td>
+                                    <td>@string.Format("{0:dd/MM/yyyy HH:mm:ss}", item.CreatedOn)</td>
+                                    <td>@(item.ModifiedBy != null ? string.Format("{0:dd/MM/yyyy HH:mm:ss}", item.ModifiedOn) : "")</td>
+                                    <td>@item.ApproverName</td>
+                                    <td><span class="badge bg-label-@(statusClass(item.Status)) me-1">@item.Status</span></td>
+
+                                    @if (UserId != 0 && RoleId > 1)
+                                    {
+                                        <td>
+                                            @if (item.Status != "APPROVED")
+                                            {
+                                                <button class="btn btn-dark btn_request" dataId="@item.Id" onclick="confirm('are you sure?', approveReq(@item.Id))">
+                                                    Approve
+                                                </button>
+                                            }
+                                        </td>
+                                    }
+                                </tr>
+                                index++;
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer">
+            <div class="row">
+                <div class="col-sm-12 col-md-5 d-flex justify-content-start align-items-center">
+                    <div class="dataTables_info" id="add-row_info" role="status" aria-live="polite"> @if (Model.TotalData != 0)
+                        {
+                            <span> Data @((Model.PageNumber - 1) * @ViewBag.currentShowData + 1) - @(index - 1) of @Model.TotalData data. </span>
+                        } </div>
+                </div>
+                <div class="col-sm-12 col-md-7 d-flex justify-content-end align-items-center">
+                    @{
+                        var prevDisabled = Model.HasPreviousPage ? "" : "disabled"; var nextDisabled = Model.HasNextPage ? "" : "disabled";
+                    } <div class="dataTables_paginate paging_simple_numbers" id="add-row_paginate">
+                        <ul class="pagination">
+                            <li class="page-item previous">
+                                @if (Model.HasPreviousPage)
+                                {
+                                    <a asp-action="Index" asp-route-sortOrder="@ViewBag.currentSort" asp-route-pageNumber="@(Model.PageNumber - 1)" asp-route-showData="@ViewBag.currentShowData" asp-route-searchTerm="@ViewBag.currentSearchTerm" class="page-link text-primary active"> Prev </a>
+                                }
+                                else
+                                {
+                                    <a href="javascript:void(0)" class="page-link text-secondary disabled"> Prev </a>
+                                } </a>
+                            </li>
+                            <li class="page-item"> @if (Model.TotalData != 0)
+                                {
+                                    <span class="page-link"> Page @Model.PageNumber of @Model.TotalPages </span>
+                                } </li>
+                            <li class="page-item next"> @if (Model.HasNextPage)
+                                {
+                                    <a asp-action="Index" asp-route-sortOrder="@ViewBag.currentSort" asp-route-pageNumber="@(Model.PageNumber + 1)" asp-route-showData="@ViewBag.currentShowData" asp-route-searchTerm="@ViewBag.currentSearchTerm" class="page-link text-primary active"> Next </a>
+                                }
+                                else
+                                {
+                                    <a href="javascript:void(0)" class="page-link text-secondary disabled"> Next </a>
+                                } </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+</div>
+<script>
+    $('#RequestMed').addClass('active');
+    $("#btn_add").click(function() {
+    $("#modal_body").empty()
+        $("#modal_body").load("/RequestMed/Add")
+        $("#my_modal").modal("show")
+    })
+    $("#select_show").val("@ViewBag.currentShowData")
+    $("#select_show").change(function() {
+        $("#sort_change").val("@ViewBag.currentSort")
+        $("#form_search").submit()
+    })
+    $(".btn_request").click(function() {
+        var id = $(this).attr("dataid")
+        $("#modal_body").empty()
+        $("#modal_body").load("/RequestMed/Request/" + id)
+        $("#my_modal").modal("show")
+    })
+    $("#btn_search").click(function() {
+        $("#sort_change").val("@ViewBag.currentSort")
+        $("#form_search").submit()
+    })
+    $("#btn_reset").click(function() {
+        $("#sort_change").val("")
+        $("#searchTerm").val("")
+        $("#form_search").submit()
+    })
+</script>

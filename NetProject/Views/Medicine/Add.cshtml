@@ -1,0 +1,109 @@
+﻿@using NetProject.DataModels
+@model Medicine
+@{
+    ViewData["Title"] = "Add Medicine";
+}
+<form asp-action="Add" method="post" id="form_add">
+
+    <div class="row">
+        <div class="col mb-3">
+            <label for="name" class="form-label">Medicine Name</label>
+            <input type="text" id="name" name="name" class="form-control" placeholder="Enter Name">
+        </div>
+    </div>
+    <div class="row g-2">
+        <div class="col mb-0">
+            <label for="emailBasic" class="form-label">Price</label>
+            <input type="number" id="price" name="price" class="form-control" placeholder="10000">
+        </div>
+        <div class="col mb-0">
+            <label for="dobBasic" class="form-label">Stock</label>
+            <input type="number" id="stock" name="stock" class="form-control" placeholder="17">
+        </div>
+    </div>
+    <div class="row">
+        <div class="col mb-3">
+            <label for="expiredDate" class="form-label">Expiry Date</label>
+            <input type="date" id="expiredDate" name="expireddate" class="form-control">
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col mb-3">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" asp-controller="Medicine" asp-action="Index">
+                Close
+            </button>
+            <button type="submit" id="submit_button" class="btn btn-primary">Save changes</button>
+       </div>
+    </div>
+
+</form>
+
+<script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+
+<script>
+    // Initialize the jQuery validation
+    $("#form_add").validate({
+        errorClass: "is-invalid text-danger",
+        rules: {
+            name: {
+                required: true,
+            },
+            price: {
+                required: true,
+                min: 1
+            },
+            stock: {
+                required: true,
+                min: 1
+            },
+            expireddate: {
+                required: true
+            }
+        },
+        messages: {
+            name: {
+                required: "Please enter the medicine name",
+            },
+            price: {
+                required: "Please enter the price",
+                min: "Price must be greater than 0"
+            },
+            stock: {
+                required: "Please enter the stock quantity",
+                min: "Stock must be greater than 0"
+            },
+            expireddate: {
+                required: "Please select an expiry date"
+            }
+        },
+        submitHandler: function (form) {
+            // Serialize form data and pass it to submitAdd function
+            var formData = $(form).serialize(); // Get form data
+            submitAdd(formData);
+        }
+    });
+
+    function submitAdd(formData) {
+        $.ajax({
+            url: '/Medicine/Add',
+            type: 'POST',
+            data: formData,
+            dataType: 'json',
+            success: function (response) {
+                let data = response.dataResponse;
+                if (data.success) {
+                    $("#my_modal").modal("hide");
+                    alert(data.message);
+                    window.location.reload(); // Reload page on success
+                } else {
+                    alert(data.message); // Show error message if failed
+                }
+            },
+            error: function (response) {
+                console.log("AJAX Error:", response);
+                alert("An error occurred while saving the medicine.");
+            }
+        });
+    }
+</script>

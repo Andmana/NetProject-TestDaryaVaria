@@ -1,0 +1,89 @@
+﻿@using NetProject.ViewModels
+@model ViewRequestMed
+@{
+    ViewData["Title"] = "Request Medicine";
+}
+
+<form asp-action="Request" method="post" id="form_request">
+    <!-- Hidden input to store medicine ID -->
+    <input type="hidden" id="medicineid" name="medicineid" value="@ViewBag.Medicine.Id" />
+
+    <!-- Medicine Details Section (Display Only) -->
+    <div class="row">
+        <div class="col mb-3">
+            <label for="name" class="form-label">Medicine Name</label>
+            <input type="text" class="form-control" placeholder="Enter Name" value="@ViewBag.Medicine.Name" disabled>
+        </div>
+    </div>
+
+    <div class="row g-2">
+        <!-- Price (Read-only) -->
+        <div class="col mb-0">
+            <label for="price" class="form-label">Price</label>
+            <input type="number" class="form-control" placeholder="10000" value="@ViewBag.Medicine.Price" disabled>
+        </div>
+
+        <!-- Quantity (Input for User) -->
+        <div class="col mb-0">
+            <label for="quantity" class="form-label">Quantity</label>
+            <input type="number" id="quantity" name="quantity" class="form-control" min="1" max="@ViewBag.Medicine.Stock" value="1" required>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Expiry Date (Read-only) -->
+        <div class="col mb-3">
+            <label for="expiredDate" class="form-label">Expiry Date</label>
+            <input type="text" class="form-control" value="@String.Format("{0:yyyy-MM-dd}", ViewBag.Medicine.ExpiredDate)" disabled>
+        </div>
+    </div>
+
+    <!-- Form Actions -->
+    <div class="row">
+        <div class="col mb-3">
+            <button type="button" class="btn btn-outline-secondary" asp-controller="Medicine" asp-action="Index">
+                Close
+            </button>
+            <button type="submit" id="submit_button" class="btn btn-primary">Request</button>
+        </div>
+    </div>
+</form>
+<script src="~/lib/jquery-validation/dist/jquery.validate.js"></script>
+
+<script>
+    // jQuery validation setup
+    $("#form_request").validate({
+        submitHandler: function (form) {
+            // Only send medicineid and quantity as form data
+            var formData = {
+                medicineid: $("#medicineid").val(),
+                quantity: $("#quantity").val()
+            };
+            submitRequest(formData);
+        }
+    });
+
+    // Submit the request via AJAX
+    function submitRequest(formData) {
+        $.ajax({
+            url: '/Medicine/Request',
+            type: 'POST',
+            data: formData,
+            dataType: 'json',
+            success: function (response) {
+                let data = response.dataResponse;
+                if (data.success) {
+                    $("#my_modal").modal("hide");
+                    alert(data.message);
+                    window.location.reload(); // Reload page on success
+                } else {
+                    alert(data.message); // Show error message
+                }
+            },
+            error: function (response) {
+                console.error("AJAX Error:", response);
+                alert("An error occurred while processing the request.");
+            }
+        });
+    }
+</script>

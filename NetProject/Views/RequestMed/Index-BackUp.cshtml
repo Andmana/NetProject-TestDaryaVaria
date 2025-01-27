@@ -1,0 +1,102 @@
+﻿@using NetProject.ViewModels
+@{
+    int index = 1;
+    Func<string, string> statusClass = (detail) =>
+    {
+        if (detail == "REQUEST")
+            return "info";
+        else if (detail == "APPROVED")
+            return "success";
+        else
+            return "primary"; // Provide a fallback return if no conditions are met
+    };
+
+    int UserId = Context.Session.GetInt32("UserId") ?? 0;
+    int RoleId = Context.Session.GetInt32("RoleId") ?? 0;
+}
+
+<div class="card">
+    <div class="card-header">
+        <div class="d-flex align-items-center">
+            <h4 class="card-title">Medicine Request</h4>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-striped table-responsive">
+            <thead>
+                <tr>
+                    <th>No</th>
+                    <th>Requested by</th>
+                    <th>Medicine Name</th>
+                    <th>Quantity</th>
+                    <th>Request Date</th>
+                    <th>Approve Date</th>
+                    <th>Approved by</th>
+                    <th>Status</th>
+                @if (UserId != 0 && RoleId > 1)
+                {
+                    <th>Actions</th>
+                }
+                </tr>
+            </thead>
+            <tbody class="table-border-bottom-0">
+                @foreach (ViewRequestMed item in Model)
+                {
+                    <tr>
+                        <th scope="row">@index</th>
+                        <td>
+                            <i class="fab fa-angular fa-lg text-danger me-3"></i>
+                            <strong>@item.RequesterName</strong>
+                        </td>
+                        <td>@item.MedicineName</td>
+                        <td>@item.Quantity</td>
+                        <td>@string.Format("{0:dd/MM/yyyy HH:mm:ss}", item.CreatedOn)</td>
+                        <td>@(item.ModifiedBy != null ? string.Format("{0:dd/MM/yyyy HH:mm:ss}", item.ModifiedOn) : "")</td>
+                        <td>@item.ApproverName</td>
+                        <td><span class="badge bg-label-@(statusClass(item.Status)) me-1">@item.Status</span></td>
+                        @if (UserId != 0 && RoleId > 1)
+                        {
+                            <td>
+                                @if (item.Status != "APPROVED")
+                                {
+                                    <button class="btn btn-dark btn_request" dataId="@item.Id" onclick="confirm('are you sure?', approveReq(@item.Id))">
+                                        Approve
+                                    </button>
+                                }
+                            </td>
+                        }
+
+                    </tr>
+                    index++;
+                }
+            </tbody>
+        </table>
+    </div>
+
+
+</div>
+<script>
+
+    const approveReq = (id) => {
+        $.ajax({
+            type: "post",
+            url: `RequestMed/ApproveReq`,
+            data: {id},
+            success: (response) => {
+                var data = response.dataResponse
+                if (data.success) {
+                    alert("Approve Success");
+                    location.reload();
+                }
+                else {
+                    alert(data.message)
+                }
+            },
+        });
+    };
+
+
+    $('#RequestMed').addClass('active');
+
+
+</script>

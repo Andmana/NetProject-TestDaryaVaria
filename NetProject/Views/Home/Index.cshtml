@@ -1,0 +1,117 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+    int UserId = Context.Session.GetInt32("UserId") ?? 0;
+
+}
+
+<div class="text-center">
+    <h1 class="display-4">Welcome</h1>
+    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+</div>
+<div class="row justify-content-center">
+    <div class="col-md-4 mb-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">Medicine Expired Chart</h5>
+                <p class="card-text">
+                    Show medicine stock more or less than 10
+                </p>
+            </div>
+            <canvas id="expDoughnutChart"  width="400" height="400"></canvas>
+        </div>
+    </div>
+    <div class="col-md-4  mb-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">Medicine stock Chart</h5>
+                <h6 class="card-subtitle text-muted"> Show medicine stock more or less than 10</h6>
+            </div>
+            <canvas id="stockDoughnutChart"  width="400" height="400"></canvas>
+        </div>
+    </div>
+</div>
+<script src="~/js/chart.umd.min.js"></script>
+<script>
+  // Get the canvas elements
+  var ctx = document.getElementById('stockDoughnutChart').getContext('2d');
+  var dtx = document.getElementById('expDoughnutChart').getContext('2d');
+  let statLabel = [];
+  let statValue = [];
+
+  // Perform the AJAX call to fetch the data
+  $.ajax({
+    url: '/Medicine/GetStats', // Add the missing closing quote here
+    dataType: 'json', // Expect JSON data
+    method: 'GET', // The HTTP method
+    success: function(response) {
+      var data = response.dataResponse.entity;
+      
+      // Populate statLabel and statValue arrays
+      data.forEach(function(item) {
+        statLabel.push(item.label);
+        statValue.push(item.value);
+      });
+
+      // Now that we have the data, create the charts
+      createCharts();
+    },
+    error: function(xhr, status, error) {
+      console.error('Error fetching data:', error); // Add error handling
+    }
+  });
+
+  function createCharts() {
+    // Create the first doughnut chart
+    var stockDoughnutChart = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: [statLabel[2], statLabel[3]], // Labels for the slices
+        datasets: [{
+          data: [statValue[2], statValue[3]], // Data for each slice
+                    backgroundColor: ['#4ebcff', '#6277BA'], // Slice colors
+                    hoverBackgroundColor: ['#91ffff', '#4b39b5'], // Hover colors
+          borderWidth: 1 // Border width for each slice
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'top', // Legend position
+          },
+          tooltip: {
+            enabled: true, // Show tooltips
+          }
+        }
+      }
+    });
+
+    // Create the second doughnut chart
+    var expDoughnutChart = new Chart(dtx, {
+      type: 'doughnut',
+      data: {
+        labels: [statLabel[0], statLabel[1]], // Labels for the slices
+        datasets: [{
+          data: [statValue[0], statValue[1]], // Data for each slice
+                    backgroundColor: ['#ff99ff', '#FF0000'], // Slice colors
+                    hoverBackgroundColor: ['#ffb3ff', '#a70000'], // Hover colors
+          borderWidth: 1 // Border width for each slice
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'top', // Legend position
+          },
+          tooltip: {
+            enabled: true, // Show tooltips
+          }
+        }
+      }
+    });
+  }
+
+  $('#Home').addClass('active');
+
+</script>
